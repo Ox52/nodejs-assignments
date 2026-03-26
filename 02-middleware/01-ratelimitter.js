@@ -1,6 +1,6 @@
 // You have to create a middleware for rate limiting a users request based on their username passed in the header
 
-const express = require('express');
+const express = require("express");
 const app = express();
 
 // Your task is to create a global middleware (app.use) which will
@@ -12,16 +12,66 @@ const app = express();
 // clears every one second
 
 let numberOfRequestsForUser = {};
-setInterval(() => {
-    numberOfRequestsForUser = {};
-}, 1000)
 
-app.get('/user', function(req, res) {
-  res.status(200).json({ name: 'john' });
+let ResetInterval;
+
+app.use((req, res, next) => {
+  const userId = req.header("user-id");
+
+  if (!userId) {
+    res.status(400).json("user id required");
+  }
+
+  const currentTime = Math.floor(Date.now / 1000);
+
+  if (!numberOfRequestsForUser[userId]) {
+    numberOfRequestsForUser[userId] = {
+      count: 0,
+      currentTime: lastRequestTime,
+    };
+  }
+
+  const userData = numberOfRequestsForUser[userId];
+
+  if (currentTime === userData.lastRequestTime) {
+    userData.count += 1;
+  } else {
+    userData.count = 1;
+
+    userData.lastRequestTime = currentTime;
+  }
+
+  if (userData.count > 5) {
+    res.status(400).json("too many requests");
+  }
+
+  next();
 });
 
-app.post('/user', function(req, res) {
-  res.status(200).json({ msg: 'created dummy user' });
+setInterval(() => {
+  numberOfRequestsForUser = {};
+}, 1000);
+
+app.get("/user", function (req, res) {
+  res.status(200).json({ name: "john" });
+});
+
+app.post("/user", function (req, res) {
+  res.status(200).json({ msg: "created dummy user" });
 });
 
 module.exports = app;
+
+resetInterval = setInterval(() => {
+  numberOfRequestsForUser = {};
+}, 1000);
+
+//routes
+
+app.get("user", (req, res) => {
+  req.status(400).json({ name: "jhon" });
+});
+
+app.post("user", (req, res) => {
+  req.status(400).json({ name: "jhon" });
+});
